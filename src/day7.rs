@@ -4,38 +4,39 @@ use std::{
     fmt::{self, Write},
 };
 
-use aoc_runner_derive::{aoc, aoc_generator};
+use aoc_runner_derive::aoc;
 
-#[aoc_generator(day7)]
-fn generator(input: &str) -> Vec<Hand> {
-    let mut hands = input.lines().map(Hand::parse).collect::<Vec<_>>();
+#[aoc(day7, part1)]
+fn part1(input: &str) -> usize {
+    let mut hands = input.lines().map(|line| Hand::parse(line, false)).collect::<Vec<_>>();
     hands.sort_unstable();
-    hands
 
+    hands
+        .iter()
+        .enumerate()
+        .map(|(i, hand)| {
+            let rank = i + 1;
+            hand.bid * rank
+        })
+        .sum()
 }
 
 #[aoc(day7, part2)]
-fn part2(hands: &Vec<Hand>) -> usize {
-    let mut answer = 0;
-    let mut rank = 0;
-    let mut last = None;
+fn part2(input: &str) -> usize {
+    let mut hands = input.lines().map(|line| Hand::parse(line, true)).collect::<Vec<_>>();
+    hands.sort_unstable();
 
-    for (i, hand) in hands.iter().enumerate() {
-        let position = i + 1;
-        if last != Some(hand) {
-            rank = position;
-        } else {
-            // panic!("tie");
-        }
-        last = Some(hand);
-
-        answer += hand.bid * rank;
-    }
-
-    answer
+    hands
+        .iter()
+        .enumerate()
+        .map(|(i, hand)| {
+            let rank = i + 1;
+            hand.bid * rank
+        })
+        .sum()
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 struct Hand {
     ty: HandType,
     cards: [Card; 5],
@@ -43,13 +44,13 @@ struct Hand {
 }
 
 impl Hand {
-    fn parse(input: &str) -> Self {
+    fn parse(input: &str, with_jokers: bool) -> Self {
         let (cards, bid) = input.split_once(" ").expect("once");
         let cards = cards.chars().map(Card::from).collect::<Vec<_>>();
         assert_eq!(5, cards.len());
         let bid: usize = bid.parse().expect("bid");
         Self {
-            ty: HandType::from_hand(&cards),
+            ty: HandType::from_hand(&cards, with_jokers),
             cards: cards.try_into().unwrap(),
             bid,
         }
@@ -119,7 +120,7 @@ impl From<char> for Card {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 enum HandType {
     FiveOfKind = 7,
     FourOfKind = 6,
@@ -131,25 +132,27 @@ enum HandType {
 }
 
 impl HandType {
-    fn from_hand(hand: &[Card]) -> Self {
+    fn from_hand(hand: &[Card], with_jokers: bool) -> Self {
         let mut counts: HashMap<Card, u8> = HashMap::new();
         for c in hand {
             let entry = counts.entry(*c).or_default();
             *entry += 1;
         }
 
-        if let Some(js) = counts.remove(&Card::from('J')) {
-            let mut rest = counts
-                .clone()
-                .into_iter()
-                .map(|(k, v)| (v, k))
-                .collect::<Vec<_>>();
-            rest.sort_by_key(|(a, _)| *a);
-            if let Some((_count, card)) = rest.pop() {
-                let c = counts.get_mut(&card).expect("nope");
-                *c += js;
-            } else {
-                counts.insert(Card::from('J'), js);
+        if with_jokers {
+            if let Some(js) = counts.remove(&Card::from('J')) {
+                let mut rest = counts
+                    .clone()
+                    .into_iter()
+                    .map(|(k, v)| (v, k))
+                    .collect::<Vec<_>>();
+                rest.sort_by_key(|(a, _)| *a);
+                if let Some((_count, card)) = rest.pop() {
+                    let c = counts.get_mut(&card).expect("nope");
+                    *c += js;
+                } else {
+                    counts.insert(Card::from('J'), js);
+                }
             }
         }
 

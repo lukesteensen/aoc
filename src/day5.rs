@@ -98,16 +98,16 @@ fn part2(input: &Input) -> u32 {
 
 #[derive(Debug)]
 struct Map {
-    from: String,
-    to: String,
+    _from: String,
+    _to: String,
     ranges: Vec<Range>,
 }
 
 impl Map {
     fn new(from: &str, to: &str, ranges: Vec<Range>) -> Self {
         Self {
-            from: from.into(),
-            to: to.into(),
+            _from: from.into(),
+            _to: to.into(),
             ranges,
         }
     }
