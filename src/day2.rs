@@ -7,12 +7,12 @@ fn generator(input: &str) -> HashMap<u32, HashMap<String, u32>> {
     let mut maxes_per_game: HashMap<u32, HashMap<String, u32>> = HashMap::new();
     for line in input.lines() {
         let (game, rest) = line.split_once(": ").expect("game");
-        let (_game, num) = game.split_once(" ").expect("game num");
+        let (_game, num) = game.split_once(' ').expect("game num");
         let game_num: u32 = num.parse().expect("parse num");
 
-        for game in rest.split(";") {
-            for color in game.split(",") {
-                let (count, color) = color.trim().split_once(" ").expect("split color");
+        for game in rest.split(';') {
+            for color in game.split(',') {
+                let (count, color) = color.trim().split_once(' ').expect("split color");
                 let count: u32 = count.parse().expect("parse count");
                 let game_entry = maxes_per_game.entry(game_num).or_default();
                 let entry = game_entry.entry(color.trim().to_string()).or_default();

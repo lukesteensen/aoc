@@ -8,7 +8,10 @@ use aoc_runner_derive::aoc;
 
 #[aoc(day7, part1)]
 fn part1(input: &str) -> usize {
-    let mut hands = input.lines().map(|line| Hand::parse(line, false)).collect::<Vec<_>>();
+    let mut hands = input
+        .lines()
+        .map(|line| Hand::parse(line, false))
+        .collect::<Vec<_>>();
     hands.sort_unstable();
 
     hands
@@ -23,7 +26,10 @@ fn part1(input: &str) -> usize {
 
 #[aoc(day7, part2)]
 fn part2(input: &str) -> usize {
-    let mut hands = input.lines().map(|line| Hand::parse(line, true)).collect::<Vec<_>>();
+    let mut hands = input
+        .lines()
+        .map(|line| Hand::parse(line, true))
+        .collect::<Vec<_>>();
     hands.sort_unstable();
 
     hands
@@ -45,7 +51,7 @@ struct Hand {
 
 impl Hand {
     fn parse(input: &str, with_jokers: bool) -> Self {
-        let (cards, bid) = input.split_once(" ").expect("once");
+        let (cards, bid) = input.split_once(' ').expect("once");
         let cards = cards.chars().map(Card::from).collect::<Vec<_>>();
         assert_eq!(5, cards.len());
         let bid: usize = bid.parse().expect("bid");
@@ -59,14 +65,20 @@ impl Hand {
 
 impl PartialOrd for Hand {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
         let order = self.ty.cmp(&other.ty);
         if order.is_ne() {
-            Some(order)
+            order
         } else {
             for (s, o) in self.cards.iter().zip(other.cards.iter()) {
                 let order = s.v.cmp(&o.v);
                 if order.is_ne() {
-                    return Some(order);
+                    return order;
                 }
             }
             panic!("equal hands");
@@ -74,11 +86,6 @@ impl PartialOrd for Hand {
     }
 }
 
-impl Ord for Hand {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).expect("bad partial_cmp")
-    }
-}
 impl fmt::Display for Hand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for c in self.cards {

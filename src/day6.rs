@@ -23,7 +23,7 @@ fn part1(input: &str) -> usize {
                 .filter_map(|t| {
                     let speed = t;
                     let d = speed * (time - t);
-                    (d > distance).then(|| ())
+                    (d > distance).then_some(())
                 })
                 .count()
         })
@@ -55,7 +55,7 @@ fn part2(input: &str) -> usize {
         .filter_map(|t| {
             let speed = t;
             let d = speed * (time - t);
-            (d > distance).then(|| ())
+            (d > distance).then_some(())
         })
         .count()
 }

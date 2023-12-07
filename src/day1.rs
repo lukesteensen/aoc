@@ -1,5 +1,3 @@
-use std::convert::identity;
-
 use aoc_runner_derive::aoc;
 
 #[aoc(day1, part1)]
@@ -7,7 +5,7 @@ fn part1(input: &str) -> u32 {
     input
         .lines()
         .map(|line| {
-            let mut iter = line.chars().filter(|c| c.is_digit(10));
+            let mut iter = line.chars().filter(|c| c.is_ascii_digit());
             let first = iter.next().expect("first");
             let last = iter.last().unwrap_or(first);
             let high = first.to_digit(10).expect("parse first");
@@ -40,7 +38,7 @@ fn part2(input: &str) -> u32 {
                     ps.iter().flat_map(|pat| {
                         let first = line.find(pat).map(|pos| (pos, *val));
                         let last = line.rfind(pat).map(|pos| (pos, *val));
-                        [first, last].into_iter().filter_map(identity)
+                        [first, last].into_iter().flatten()
                     })
                 })
                 .collect::<Vec<_>>();

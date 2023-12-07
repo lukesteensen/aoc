@@ -29,18 +29,16 @@ fn generator(input: &str) -> Input {
                 current_keys.1,
                 std::mem::take(&mut current),
             ));
+        } else if line.chars().next().unwrap().is_ascii_alphabetic() {
+            let (name, _rest) = line.split_once(' ').expect("split name");
+            let (from, to) = name.split_once("-to-").expect("split from to");
+            current_keys = (from, to);
         } else {
-            if line.chars().next().unwrap().is_ascii_alphabetic() {
-                let (name, _rest) = line.split_once(' ').expect("split name");
-                let (from, to) = name.split_once("-to-").expect("split from to");
-                current_keys = (from, to);
-            } else {
-                let parsed = line
-                    .split_whitespace()
-                    .map(|s| s.parse::<u32>().expect("parse ranges"))
-                    .collect::<Vec<_>>();
-                current.push(Range::new(parsed));
-            }
+            let parsed = line
+                .split_whitespace()
+                .map(|s| s.parse::<u32>().expect("parse ranges"))
+                .collect::<Vec<_>>();
+            current.push(Range::new(parsed));
         }
     }
     maps.push(Map::new(

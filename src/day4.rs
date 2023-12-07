@@ -13,12 +13,10 @@ fn part1(input: &str) -> usize {
 
             let (winning, have) = rest.split_once('|').expect("rest");
             let winning: HashSet<u32> = winning
-                .trim()
                 .split_whitespace()
                 .map(|s| s.parse().expect("parse winning"))
                 .collect();
             let have: HashSet<u32> = have
-                .trim()
                 .split_whitespace()
                 .map(|s| s.parse().expect("parse have"))
                 .collect();
@@ -43,12 +41,10 @@ fn part2(input: &str) -> usize {
 
         let (winning, have) = rest.split_once('|').expect("rest");
         let winning: HashSet<u32> = winning
-            .trim()
             .split_whitespace()
             .map(|s| s.parse().expect("parse winning"))
             .collect();
         let have: HashSet<u32> = have
-            .trim()
             .split_whitespace()
             .map(|s| s.parse().expect("parse have"))
             .collect();

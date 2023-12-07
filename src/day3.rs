@@ -20,10 +20,8 @@ fn generator(input: &str) -> GridNums {
                     current_number = Some(digit)
                 }
                 current_number_coords.push((col as i32, row as i32));
-            } else {
-                if let Some(num) = current_number.take() {
-                    numbers.push((num, std::mem::take(&mut current_number_coords)));
-                }
+            } else if let Some(num) = current_number.take() {
+                numbers.push((num, std::mem::take(&mut current_number_coords)));
             }
         }
         if let Some(num) = current_number.take() {
@@ -55,7 +53,7 @@ fn part1((grid, numbers): &GridNums) -> u32 {
                 })
                 .filter(|coord| grid.contains_key(coord))
                 .filter(|coord| !coords.contains(coord))
-                .any(|coord| grid[&coord].is_digit(10) == false && (grid[&coord] != '.'));
+                .any(|coord| !grid[&coord].is_ascii_digit() && (grid[&coord] != '.'));
 
             if touches_symbol {
                 Some(num)
