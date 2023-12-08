@@ -147,18 +147,17 @@ impl HandType {
         }
 
         if with_jokers {
-            if let Some(js) = counts.remove(&Card::from('J')) {
-                let mut rest = counts
-                    .clone()
-                    .into_iter()
-                    .map(|(k, v)| (v, k))
-                    .collect::<Vec<_>>();
-                rest.sort_by_key(|(a, _)| *a);
-                if let Some((_count, card)) = rest.pop() {
+            if let Some(num_jokers) = counts.remove(&Card::from('J')) {
+                // if we have jokers, find the card we have the most of and add the number of
+                // jokers to our count of that card
+                let mut rest = counts.clone().into_iter().collect::<Vec<_>>();
+                rest.sort_by_key(|(_key, count)| *count);
+                if let Some((card, _count)) = rest.pop() {
                     let c = counts.get_mut(&card).expect("nope");
-                    *c += js;
+                    *c += num_jokers;
                 } else {
-                    counts.insert(Card::from('J'), js);
+                    // there are no non-jokers, so just put them back and score normally
+                    counts.insert(Card::from('J'), num_jokers);
                 }
             }
         }
