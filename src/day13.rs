@@ -40,11 +40,11 @@ fn part1(input: &[Pattern]) -> usize {
     let mut y_mirrors = Vec::new();
     let mut x_mirrors = Vec::new();
     for (pid, pattern) in input.iter().enumerate() {
-        if let Some(y) = find_row(pattern) {
+        if let (Some(y), _) = find_row(pattern) {
             y_mirrors.push(y);
             continue;
         }
-        if let Some(x) = find_col(pattern) {
+        if let (Some(x), _) = find_col(pattern) {
             x_mirrors.push(x);
             continue;
         }
@@ -85,8 +85,10 @@ fn part1(input: &[Pattern]) -> usize {
     x_mirrors.iter().sum::<usize>() + (100 * y_mirrors.iter().sum::<usize>())
 }
 
-fn find_row(pattern: &Pattern) -> Option<usize> {
+fn find_row(pattern: &Pattern) -> (Option<usize>, Option<usize>) {
     let pattern = pattern.rows.clone();
+    let mut zero = None;
+    let mut one = None;
     for y in 0..pattern.len() {
         let (above, below) = pattern.split_at(y);
 
@@ -96,38 +98,99 @@ fn find_row(pattern: &Pattern) -> Option<usize> {
         }
         let mut below = below[0..len].to_vec();
         below.reverse();
-        if &above[(y - len)..y] == &below[0..len] {
+        let dist = dist2(&above[(y - len)..y], &below[0..len]);
+        if dist == 0 {
             // println!("y = {y}");
-            return Some(y);
+            zero = Some(y);
+        } else if dist == 1 {
+            one = Some(y);
         }
     }
-    None
+    (zero, one)
 }
 
-fn find_col(pattern: &Pattern) -> Option<usize> {
+fn find_col(pattern: &Pattern) -> (Option<usize>, Option<usize>) {
     let pattern = pattern.rows.clone();
-    for x in 0..pattern[0].len() {
-        if pattern.iter().all(|row| {
-            let (above, below) = row.split_at(x);
-            let len = above.len().min(below.len());
-            if len != 0 {
+    let mut zero = None;
+    let mut one = None;
+    for x in 1..(pattern[0].len()) {
+        let dist = pattern
+            .iter()
+            .map(|row| {
+                let (above, below) = row.split_at(x);
+                let len = above.len().min(below.len());
+                assert!(len > 0);
                 let mut below = below[0..len].to_vec();
                 below.reverse();
-                &above[(x - len)..x] == &below[0..len]
-            } else {
-                false
-            }
-        }) {
+                dist(&above[(x - len)..x], &below[0..len])
+            })
+            .sum::<usize>();
+        if dist == 0 {
             // println!("x = {x}");
-            return Some(x);
+            zero = Some(x);
+        } else if dist == 1 {
+            one = Some(x)
         }
     }
-    None
+    (zero, one)
+}
+
+fn dist(a: &[char], b: &[char]) -> usize {
+    a.iter().zip(b.iter()).filter(|(a, b)| a != b).count()
+}
+
+fn dist2(a: &[Vec<char>], b: &[Vec<char>]) -> usize {
+    a.iter().zip(b.iter()).map(|(a, b)| dist(a, b)).sum()
 }
 
 #[aoc(day13, part2)]
 fn part2(input: &[Pattern]) -> usize {
-    todo!()
+    let mut y_mirrors = Vec::new();
+    let mut x_mirrors = Vec::new();
+    for (pid, pattern) in input.iter().enumerate() {
+        if let (_, Some(y)) = find_row(pattern) {
+            y_mirrors.push(y);
+            continue;
+        }
+        if let (_, Some(x)) = find_col(pattern) {
+            x_mirrors.push(x);
+            continue;
+        }
+
+        println!("pattern {pid}");
+        pattern.print();
+        let pattern = pattern.rows.clone();
+        for y in 0..pattern.len() {
+            let (above, below) = pattern.split_at(y);
+
+            let len = above.len().min(below.len());
+            if len == 0 {
+                continue;
+            }
+            let mut below = below[0..len].to_vec();
+            below.reverse();
+
+            let aa = &above[(y - len)..y];
+            let bb = &below[0..len];
+            if y == 2 {
+                println!("");
+                for r in aa {
+                    println!("{r:?}");
+                }
+                println!("{}", "--".repeat(10));
+                for r in bb {
+                    println!("{r:?}");
+                }
+            }
+            if aa == bb {
+                println!("y = {y}");
+                break;
+            }
+        }
+        panic!("no mirror found")
+    }
+
+    x_mirrors.iter().sum::<usize>() + (100 * y_mirrors.iter().sum::<usize>())
 }
 
 #[cfg(test)]
@@ -160,7 +223,26 @@ mod tests {
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&parse("<EXAMPLE>")), 69);
+        assert_eq!(
+            part2(&parse(
+                "#.##..##.
+..#.##.#.
+##......#
+##......#
+..#.##.#.
+..##..##.
+#.#.##.#.
+
+#...##..#
+#....#..#
+..##..###
+#####.##.
+#####.##.
+..##..###
+#....#..#"
+            )),
+            400
+        );
     }
 }
 
