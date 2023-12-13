@@ -48,37 +48,6 @@ fn part1(input: &[Pattern]) -> usize {
             x_mirrors.push(x);
             continue;
         }
-
-        println!("pattern {pid}");
-        pattern.print();
-        let pattern = pattern.rows.clone();
-        for y in 0..pattern.len() {
-            let (above, below) = pattern.split_at(y);
-
-            let len = above.len().min(below.len());
-            if len == 0 {
-                continue;
-            }
-            let mut below = below[0..len].to_vec();
-            below.reverse();
-
-            let aa = &above[(y - len)..y];
-            let bb = &below[0..len];
-            if y == 2 {
-                println!("");
-                for r in aa {
-                    println!("{r:?}");
-                }
-                println!("{}", "--".repeat(10));
-                for r in bb {
-                    println!("{r:?}");
-                }
-            }
-            if aa == bb {
-                println!("y = {y}");
-                break;
-            }
-        }
         panic!("no mirror found")
     }
 
@@ -155,37 +124,6 @@ fn part2(input: &[Pattern]) -> usize {
         if let (_, Some(x)) = find_col(pattern) {
             x_mirrors.push(x);
             continue;
-        }
-
-        println!("pattern {pid}");
-        pattern.print();
-        let pattern = pattern.rows.clone();
-        for y in 0..pattern.len() {
-            let (above, below) = pattern.split_at(y);
-
-            let len = above.len().min(below.len());
-            if len == 0 {
-                continue;
-            }
-            let mut below = below[0..len].to_vec();
-            below.reverse();
-
-            let aa = &above[(y - len)..y];
-            let bb = &below[0..len];
-            if y == 2 {
-                println!("");
-                for r in aa {
-                    println!("{r:?}");
-                }
-                println!("{}", "--".repeat(10));
-                for r in bb {
-                    println!("{r:?}");
-                }
-            }
-            if aa == bb {
-                println!("y = {y}");
-                break;
-            }
         }
         panic!("no mirror found")
     }
