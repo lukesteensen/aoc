@@ -22,17 +22,6 @@ impl Pattern {
             rows: input.lines().map(|line| line.chars().collect()).collect(),
         }
     }
-
-    fn print(&self) {
-        print!("{:3} ", "");
-        for i in 0..self.rows[0].len() {
-            print!("{i:1}");
-        }
-        println!();
-        for (i, row) in self.rows.iter().enumerate() {
-            println!("{i:3} {}", String::from_iter(row));
-        }
-    }
 }
 
 #[aoc(day13, part1)]

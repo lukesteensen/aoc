@@ -140,17 +140,6 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
         .collect()
 }
 
-fn print(rows: &[Vec<char>]) {
-    print!("{:3} ", "");
-    for i in 0..rows[0].len() {
-        print!("{i:1}");
-    }
-    println!();
-    for (i, row) in rows.iter().enumerate() {
-        println!("{i:3} {}", String::from_iter(row));
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -56,22 +56,6 @@ fn group(input: &[char]) -> Vec<(char, usize)> {
     gs
 }
 
-fn valid(input: &[char], groups: &[usize]) -> bool {
-    let gs = group(input);
-    let first_q = gs.iter().position(|(c, _)| *c == '?').unwrap_or(gs.len());
-    if first_q > 3 {
-        let counts: Vec<usize> = gs
-            .into_iter()
-            .take(first_q)
-            .filter_map(|(c, n)| (c == '#').then_some(n))
-            .collect();
-
-        counts == &groups[0..counts.len().min(groups.len())]
-    } else {
-        gs.into_iter().filter(|(c, _)| *c == '#').count() <= groups.iter().sum()
-    }
-}
-
 #[aoc(day12, part1)]
 fn part1(input: &[Row]) -> usize {
     let mut combos = 0;
@@ -106,44 +90,6 @@ fn part1(input: &[Row]) -> usize {
     combos
 }
 
-fn part2_bad(input: &[Row]) -> usize {
-    let mut combos = 0;
-    let rows = input.len();
-    for (n, row) in input.iter().enumerate() {
-        println!("row {n} of {rows}");
-        let row = row.unfold();
-        let mut possible = vec![row.conditions.clone()];
-        while possible.iter().any(|v| v.iter().any(|c| *c == '?')) {
-            println!("  {} possible", possible.len());
-            possible = possible
-                .into_iter()
-                .flat_map(|mut v| {
-                    if let Some(i) = v.iter().position(|&c| c == '?') {
-                        let mut x = v.clone();
-                        v[i] = '.';
-                        x[i] = '#';
-                        vec![v, x]
-                    } else {
-                        vec![v]
-                    }
-                })
-                .filter(|p| valid(p, &row.groups))
-                .collect();
-        }
-        for cond in possible {
-            let gs = group(&cond);
-            let counts: Vec<usize> = gs
-                .into_iter()
-                .filter_map(|(c, n)| (c == '#').then_some(n))
-                .collect();
-            if counts == row.groups {
-                combos += 1
-            }
-        }
-    }
-    combos
-}
-
 #[aoc(day12, part2)]
 fn part2(input: &[Row]) -> num::BigUint {
     let mut combos = num::BigUint::from(0u8);
@@ -159,12 +105,9 @@ fn arrangements(row: &Row) -> num::BigUint {
     aux(row.conditions.clone(), row.groups.clone(), 0, cache)
 }
 
-fn aux(
-    tokens: Vec<char>,
-    counts: Vec<usize>,
-    count: usize,
-    cache: Rc<RefCell<HashMap<(Vec<char>, Vec<usize>, usize), num::BigUint>>>,
-) -> num::BigUint {
+type Cache = Rc<RefCell<HashMap<(Vec<char>, Vec<usize>, usize), num::BigUint>>>;
+
+fn aux(tokens: Vec<char>, counts: Vec<usize>, count: usize, cache: Cache) -> num::BigUint {
     let b = cache.borrow();
     let entry = b.get(&(tokens.clone(), counts.clone(), count)).cloned();
     drop(b);
@@ -198,75 +141,6 @@ fn aux(
             .insert((tokens.clone(), counts.clone(), count), result.clone());
         result
     }
-}
-
-fn solve(mut segment: Vec<char>, rem: &[char], goal: &[usize]) -> num::BigUint {
-    if rem.is_empty() {
-        if groups(&segment) == goal {
-            // println!("good");
-            return 1u8.into();
-        } else {
-            // println!("bad");
-            return 0u8.into();
-        }
-    } else if !compatible(&segment, rem, goal) {
-        // println!("incompat");
-        return 0u8.into();
-    }
-
-    let next_q = rem.iter().position(|&c| c == '?').unwrap_or(rem.len());
-    let (add, rem) = rem.split_at(next_q);
-    if !rem.is_empty() {
-        assert_eq!('?', rem[0]);
-    }
-
-    segment.extend(add);
-
-    let mut one = segment.clone();
-    let mut two = segment;
-    one.push('.');
-    two.push('#');
-    if rem.len() > 1 {
-        solve(one, &rem[1..], goal) + solve(two, &rem[1..], goal)
-    } else {
-        solve(one, &[], goal) + solve(two, &[], goal)
-    }
-}
-
-fn compatible(segment: &[char], rem: &[char], goal: &[usize]) -> bool {
-    if segment.is_empty() {
-        return true;
-    }
-
-    let seg_count = segment.iter().filter(|&c| *c == '#').count();
-    let rem_count = rem.iter().filter(|&c| *c == '#').count();
-    let rem_qs = rem.iter().filter(|&c| *c == '?').count();
-    let goal_tot = goal.iter().sum();
-
-    if seg_count + rem_count > goal_tot {
-        return false;
-    }
-
-    if seg_count + rem_count + rem_qs < goal_tot {
-        return false;
-    }
-
-    let gs = groups(segment); // 1, 1
-    if gs.is_empty() {
-        return true;
-    }
-    let up_to = gs.len() - 1; // 1
-    if up_to == 0 {
-        return true;
-    }
-    goal.len() >= gs.len() && gs[0..up_to] == goal[0..up_to] && gs[up_to] <= goal[up_to]
-}
-
-fn groups(input: &[char]) -> Vec<usize> {
-    input
-        .split(|&c| c == '.')
-        .filter_map(|s| (!s.is_empty()).then_some(s.len()))
-        .collect()
 }
 
 #[cfg(test)]
