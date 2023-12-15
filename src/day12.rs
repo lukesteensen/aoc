@@ -1,7 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use itertools::Itertools;
 
 struct Row {
     conditions: Vec<char>,
@@ -110,7 +109,7 @@ fn part1(input: &[Row]) -> usize {
 fn part2_bad(input: &[Row]) -> usize {
     let mut combos = 0;
     let rows = input.len();
-    for (n, row) in input.into_iter().enumerate() {
+    for (n, row) in input.iter().enumerate() {
         println!("row {n} of {rows}");
         let row = row.unfold();
         let mut possible = vec![row.conditions.clone()];
@@ -228,9 +227,9 @@ fn solve(mut segment: Vec<char>, rem: &[char], goal: &[usize]) -> num::BigUint {
     one.push('.');
     two.push('#');
     if rem.len() > 1 {
-        solve(one, &rem[1..], &goal) + solve(two, &rem[1..], &goal)
+        solve(one, &rem[1..], goal) + solve(two, &rem[1..], goal)
     } else {
-        solve(one, &[], &goal) + solve(two, &[], &goal)
+        solve(one, &[], goal) + solve(two, &[], goal)
     }
 }
 
@@ -252,7 +251,7 @@ fn compatible(segment: &[char], rem: &[char], goal: &[usize]) -> bool {
         return false;
     }
 
-    let gs = groups(&segment); // 1, 1
+    let gs = groups(segment); // 1, 1
     if gs.is_empty() {
         return true;
     }
@@ -304,4 +303,3 @@ mod tests {
         );
     }
 }
-

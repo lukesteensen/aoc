@@ -63,7 +63,11 @@ fn part2(input: &[Vec<char>]) -> usize {
     // println!("cycle_len: {cycle_len}");
     // println!("remaining: {remaining}");
     // println!("offset: {offset}");
-    let last = grid_cache.get_index(cycle_start + offset).unwrap().1.clone();
+    let last = grid_cache
+        .get_index(cycle_start + offset)
+        .unwrap()
+        .1
+        .clone();
     grid = last;
 
     // println!("cycle: {}", grid_cache.len());
@@ -141,7 +145,7 @@ fn print(rows: &[Vec<char>]) {
     for i in 0..rows[0].len() {
         print!("{i:1}");
     }
-    println!("");
+    println!();
     for (i, row) in rows.iter().enumerate() {
         println!("{i:3} {}", String::from_iter(row));
     }
@@ -189,4 +193,3 @@ O.#..O.#.#
         );
     }
 }
-

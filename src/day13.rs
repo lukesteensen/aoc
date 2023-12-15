@@ -28,7 +28,7 @@ impl Pattern {
         for i in 0..self.rows[0].len() {
             print!("{i:1}");
         }
-        println!("");
+        println!();
         for (i, row) in self.rows.iter().enumerate() {
             println!("{i:3} {}", String::from_iter(row));
         }
@@ -39,7 +39,7 @@ impl Pattern {
 fn part1(input: &[Pattern]) -> usize {
     let mut y_mirrors = Vec::new();
     let mut x_mirrors = Vec::new();
-    for (pid, pattern) in input.iter().enumerate() {
+    for (_pid, pattern) in input.iter().enumerate() {
         if let (Some(y), _) = find_row(pattern) {
             y_mirrors.push(y);
             continue;
@@ -116,7 +116,7 @@ fn dist2(a: &[Vec<char>], b: &[Vec<char>]) -> usize {
 fn part2(input: &[Pattern]) -> usize {
     let mut y_mirrors = Vec::new();
     let mut x_mirrors = Vec::new();
-    for (pid, pattern) in input.iter().enumerate() {
+    for (_pid, pattern) in input.iter().enumerate() {
         if let (_, Some(y)) = find_row(pattern) {
             y_mirrors.push(y);
             continue;
@@ -183,4 +183,3 @@ mod tests {
         );
     }
 }
-

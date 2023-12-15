@@ -28,7 +28,7 @@ fn part1(input: &[Vec<i64>]) -> i64 {
         }
         let mut last = 0;
         for row in rows.iter_mut().rev() {
-            last = row.last().unwrap() + last;
+            last += row.last().unwrap();
             row.push(last);
         }
         next_values.push(*rows[0].last().unwrap());
@@ -53,7 +53,7 @@ fn part2(input: &[Vec<i64>]) -> i64 {
         }
         let mut last = 0;
         for row in rows.iter_mut().rev() {
-            last = row.last().unwrap() + last;
+            last += row.last().unwrap();
             row.push(last);
         }
         next_values.push(*rows[0].last().unwrap());

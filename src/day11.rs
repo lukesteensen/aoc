@@ -111,4 +111,3 @@ mod tests {
         assert_eq!(part2(&parse("<EXAMPLE>")), 42);
     }
 }
-

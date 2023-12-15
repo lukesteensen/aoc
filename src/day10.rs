@@ -68,9 +68,9 @@ impl Point {
     }
 
     fn all(self) -> impl Iterator<Item = Self> {
-        (0..=self.max_y)
-            .map(move |y| (0..=self.max_x).map(move |x| Self::new(x, y, self.max_x, self.max_y)))
-            .flatten()
+        (0..=self.max_y).flat_map(move |y| {
+            (0..=self.max_x).map(move |x| Self::new(x, y, self.max_x, self.max_y))
+        })
     }
 }
 
@@ -156,8 +156,7 @@ fn parse(input: &str) -> Input {
         let next = next
             .into_iter()
             .flatten()
-            .filter(|p| p != &last)
-            .next()
+            .find(|p| p != &last)
             .expect("should be one");
         last = current;
         current = next;
@@ -208,7 +207,7 @@ fn part2(input: &Input) -> usize {
     }
 
     let expanded = grid
-        .into_iter()
+        .iter()
         .flat_map(|row| {
             let mut a = Vec::new();
             let mut b = Vec::new();
