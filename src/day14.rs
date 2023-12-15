@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+
 use aoc_runner_derive::{aoc, aoc_generator};
+use indexmap::IndexMap;
+use itertools::Itertools;
 
 #[aoc_generator(day14)]
 fn parse(input: &str) -> Vec<Vec<char>> {
@@ -13,7 +17,8 @@ fn part1(input: &[Vec<char>]) -> usize {
     // print(&flipped);
     // println!("{}", "---".repeat(10));
 
-    tilt(&mut flipped);
+    let mut cache: HashMap<Vec<char>, Vec<char>> = HashMap::new();
+    tilt(&mut flipped, &mut cache);
 
     let again = transpose(flipped);
     // println!("{}", "---".repeat(10));
@@ -28,16 +33,46 @@ fn part1(input: &[Vec<char>]) -> usize {
 
 #[aoc(day14, part2)]
 fn part2(input: &[Vec<char>]) -> usize {
-    let mut flipped = transpose(input.to_vec());
+    // print(input);
+    let mut grid = transpose(input.to_vec());
 
-    for _cycle in 0..1000000000 {
-        for _ in 0..4 {
-            tilt(&mut flipped);
-            flipped = rotate(flipped);
+    let mut grid_cache: IndexMap<Vec<Vec<char>>, Vec<Vec<char>>> = IndexMap::new();
+    let mut row_cache: HashMap<Vec<char>, Vec<char>> = HashMap::new();
+
+    let mut cycle_start = None;
+    let mut remaining = 1_000_000_000;
+    while remaining > 0 {
+        remaining -= 1;
+        if let Some((i, _k, _next)) = grid_cache.get_full(&grid) {
+            cycle_start = Some(i);
+            break;
+        } else {
+            let mut result = grid.clone();
+            for _ in 0..4 {
+                tilt(&mut result, &mut row_cache);
+                result = rotate(result);
+            }
+            grid_cache.insert(grid.clone(), result.clone());
+            grid = result;
         }
     }
+    let cycle_start = cycle_start.unwrap();
+    let cycle_len = grid_cache.len() - cycle_start;
+    let offset = remaining % cycle_len;
+    // println!("cycle_start: {cycle_start}");
+    // println!("cycle_len: {cycle_len}");
+    // println!("remaining: {remaining}");
+    // println!("offset: {offset}");
+    let last = grid_cache.get_index(cycle_start + offset).unwrap().1.clone();
+    grid = last;
 
-    let again = transpose(flipped);
+    // println!("cycle: {}", grid_cache.len());
+    // println!("after {cycle} cycles {}", "---".repeat(20));
+    // grid = transpose(grid);
+    // print(&grid);
+    // grid = transpose(grid);
+
+    let again = transpose(grid);
     let scores = (1..=again.len()).rev();
     again
         .into_iter()
@@ -46,21 +81,37 @@ fn part2(input: &[Vec<char>]) -> usize {
         .sum()
 }
 
-fn tilt(grid: &mut Vec<Vec<char>>) {
+fn tilt(grid: &mut Vec<Vec<char>>, cache: &mut HashMap<Vec<char>, Vec<char>>) {
     for row in grid {
-        let mut moved = true;
-        while moved == true {
-            moved = false;
-            for i in 1..row.len() {
-                let x = i - 1;
-                let y = i;
-                if row[x] == '.' && row[y] == 'O' {
-                    row[x] = 'O';
-                    row[y] = '.';
-                    moved = true;
+        if let Some(res) = cache.get(row) {
+            *row = res.clone();
+            continue;
+        }
+        let orig = row.clone();
+
+        let positions = row.iter().positions(|&c| c == 'O').collect_vec();
+        // println!("row {row:?}");
+        for from in positions {
+            if from == 0 {
+                continue;
+            }
+
+            // println!("from {from:?}");
+            if let Some(p) = row[0..from].iter().rposition(|&c| c == '#' || c == 'O') {
+                let to = p + 1;
+                // println!("to {to:?}");
+                if from != to {
+                    assert_eq!('.', row[to]);
+                    row[to] = 'O';
+                    row[from] = '.';
                 }
+            } else {
+                // println!("zero");
+                row[0] = 'O';
+                row[from] = '.';
             }
         }
+        cache.insert(orig, row.clone());
     }
 }
 
@@ -121,7 +172,21 @@ O.#..O.#.#
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&parse("<EXAMPLE>")), 69);
+        assert_eq!(
+            part2(&parse(
+                "O....#....
+O.OO#....#
+.....##...
+OO.#O....O
+.O.....O#.
+O.#..O.#.#
+..O..#O..O
+.......O..
+#....###..
+#OO..#...."
+            )),
+            64
+        );
     }
 }
 
