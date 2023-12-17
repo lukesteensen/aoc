@@ -31,38 +31,11 @@ struct State {
     dir_len: u8,
 }
 
+type DirFn = fn(&State) -> Vec<Direction>;
+
 impl State {
-    fn next(&self, grid: &[Vec<usize>]) -> Vec<Self> {
-        let dirs = match self.dir {
-            Direction::Right => {
-                if self.dir_len < 3 {
-                    vec![Direction::Right, Direction::Up, Direction::Down]
-                } else {
-                    vec![Direction::Up, Direction::Down]
-                }
-            }
-            Direction::Left => {
-                if self.dir_len < 3 {
-                    vec![Direction::Left, Direction::Up, Direction::Down]
-                } else {
-                    vec![Direction::Up, Direction::Down]
-                }
-            }
-            Direction::Up => {
-                if self.dir_len < 3 {
-                    vec![Direction::Up, Direction::Right, Direction::Left]
-                } else {
-                    vec![Direction::Right, Direction::Left]
-                }
-            }
-            Direction::Down => {
-                if self.dir_len < 3 {
-                    vec![Direction::Down, Direction::Right, Direction::Left]
-                } else {
-                    vec![Direction::Right, Direction::Left]
-                }
-            }
-        };
+    fn next(&self, grid: &[Vec<usize>], dir_fn: DirFn) -> Vec<Self> {
+        let dirs = dir_fn(self);
 
         dirs.into_iter()
             .map(|dir| {
@@ -97,6 +70,15 @@ impl State {
 
 #[aoc(day17, part1)]
 fn part1(grid: &[Vec<usize>]) -> usize {
+    solve(grid, normal)
+}
+
+#[aoc(day17, part2)]
+fn part2(grid: &[Vec<usize>]) -> usize {
+    solve(grid, ultra)
+}
+
+fn solve(grid: &[Vec<usize>], dir_fn: DirFn) -> usize {
     let goal = (grid[0].len() - 1, grid.len() - 1);
     let start = State {
         x: 0,
@@ -113,7 +95,7 @@ fn part1(grid: &[Vec<usize>]) -> usize {
             return cost;
         }
         visited.insert(current);
-        for n in current.next(grid) {
+        for n in current.next(grid, dir_fn) {
             let c = grid[n.y][n.x];
             if !visited.contains(&n) && !stack.contains_key(&n) {
                 // println!("  adding ({}, {}) with added cost {}", n.x, n.y, c);
@@ -131,9 +113,78 @@ fn part1(grid: &[Vec<usize>]) -> usize {
     panic!("didn't find one");
 }
 
-#[aoc(day17, part2)]
-fn part2(input: &[Vec<usize>]) -> usize {
-    todo!()
+fn normal(state: &State) -> Vec<Direction> {
+    match state.dir {
+        Direction::Right => {
+            if state.dir_len < 3 {
+                vec![Direction::Right, Direction::Up, Direction::Down]
+            } else {
+                vec![Direction::Up, Direction::Down]
+            }
+        }
+        Direction::Left => {
+            if state.dir_len < 3 {
+                vec![Direction::Left, Direction::Up, Direction::Down]
+            } else {
+                vec![Direction::Up, Direction::Down]
+            }
+        }
+        Direction::Up => {
+            if state.dir_len < 3 {
+                vec![Direction::Up, Direction::Right, Direction::Left]
+            } else {
+                vec![Direction::Right, Direction::Left]
+            }
+        }
+        Direction::Down => {
+            if state.dir_len < 3 {
+                vec![Direction::Down, Direction::Right, Direction::Left]
+            } else {
+                vec![Direction::Right, Direction::Left]
+            }
+        }
+    }
+}
+
+fn ultra(state: &State) -> Vec<Direction> {
+    match state.dir {
+        Direction::Right => {
+            if state.dir_len < 4 {
+                vec![Direction::Right]
+            } else if state.dir_len < 10 {
+                vec![Direction::Right, Direction::Up, Direction::Down]
+            } else {
+                vec![Direction::Up, Direction::Down]
+            }
+        }
+        Direction::Left => {
+            if state.dir_len < 4 {
+                vec![Direction::Left]
+            } else if state.dir_len < 10 {
+                vec![Direction::Left, Direction::Up, Direction::Down]
+            } else {
+                vec![Direction::Up, Direction::Down]
+            }
+        }
+        Direction::Up => {
+            if state.dir_len < 4 {
+                vec![Direction::Up]
+            } else if state.dir_len < 10 {
+                vec![Direction::Up, Direction::Right, Direction::Left]
+            } else {
+                vec![Direction::Right, Direction::Left]
+            }
+        }
+        Direction::Down => {
+            if state.dir_len < 4 {
+                vec![Direction::Down]
+            } else if state.dir_len < 10 {
+                vec![Direction::Down, Direction::Right, Direction::Left]
+            } else {
+                vec![Direction::Right, Direction::Left]
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -164,7 +215,24 @@ mod tests {
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&parse("<EXAMPLE>")), 8008);
+        assert_eq!(
+            part2(&parse(
+                "2413432311323
+3215453535623
+3255245654254
+3446585845452
+4546657867536
+1438598798454
+4457876987766
+3637877979653
+4654967986887
+4564679986453
+1224686865563
+2546548887735
+4322674655533"
+            )),
+            94
+        );
     }
 }
 
