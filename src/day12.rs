@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
@@ -101,16 +101,14 @@ fn part2(input: &[Row]) -> num::BigUint {
 }
 
 fn arrangements(row: &Row) -> num::BigUint {
-    let cache = Rc::new(RefCell::new(HashMap::new()));
-    aux(row.conditions.clone(), row.groups.clone(), 0, cache)
+    let mut cache = HashMap::new();
+    aux(row.conditions.clone(), row.groups.clone(), 0, &mut cache)
 }
 
-type Cache = Rc<RefCell<HashMap<(Vec<char>, Vec<usize>, usize), num::BigUint>>>;
+type Cache = HashMap<(Vec<char>, Vec<usize>, usize), num::BigUint>;
 
-fn aux(tokens: Vec<char>, counts: Vec<usize>, count: usize, cache: Cache) -> num::BigUint {
-    let b = cache.borrow();
-    let entry = b.get(&(tokens.clone(), counts.clone(), count)).cloned();
-    drop(b);
+fn aux(tokens: Vec<char>, counts: Vec<usize>, count: usize, cache: &mut Cache) -> num::BigUint {
+    let entry = cache.get(&(tokens.clone(), counts.clone(), count)).cloned();
     if let Some(v) = entry {
         v.to_owned()
     } else {
@@ -122,23 +120,18 @@ fn aux(tokens: Vec<char>, counts: Vec<usize>, count: usize, cache: Cache) -> num
                 let mut spr = vec!['#'];
                 dot.extend(ts);
                 spr.extend(ts);
-                aux(dot, cs.to_vec(), count, Rc::clone(&cache))
-                    + aux(spr, cs.to_vec(), count, Rc::clone(&cache))
+                aux(dot, cs.to_vec(), count, cache) + aux(spr, cs.to_vec(), count, cache)
             }
             (['.', ts @ ..], cs, count) if count == 0 => {
-                aux(ts.to_vec(), cs.to_vec(), count, Rc::clone(&cache))
+                aux(ts.to_vec(), cs.to_vec(), count, cache)
             }
             (['.', ts @ ..], [c, cs @ ..], count) if count != 0 && count == *c => {
-                aux(ts.to_vec(), cs.to_vec(), 0, Rc::clone(&cache))
+                aux(ts.to_vec(), cs.to_vec(), 0, cache)
             }
-            (['#', ts @ ..], cs, count) => {
-                aux(ts.to_vec(), cs.to_vec(), count + 1, Rc::clone(&cache))
-            }
+            (['#', ts @ ..], cs, count) => aux(ts.to_vec(), cs.to_vec(), count + 1, cache),
             _ => 0u8.into(),
         };
-        cache
-            .borrow_mut()
-            .insert((tokens.clone(), counts.clone(), count), result.clone());
+        cache.insert((tokens.clone(), counts.clone(), count), result.clone());
         result
     }
 }
