@@ -44,11 +44,14 @@ fn parse(input: &str) -> Vec<Instr> {
         })
         .collect()
 }
-
 #[aoc(day18, part1)]
 fn part1(input: &[Instr]) -> usize {
+    solve(input)
+}
+
+fn solve(input: &[Instr]) -> usize {
     let mut path = IndexMap::new();
-    let current = (Cell::new(0), Cell::new(0));
+    let current = (Cell::new(0isize), Cell::new(0isize));
     for instr in input {
         let (dir, diff) = match instr.dir {
             Direction::Right => (&current.0, 1),
@@ -65,55 +68,74 @@ fn part1(input: &[Instr]) -> usize {
         }
     }
 
-    let min_x = path.keys().map(|p| p.0).min().unwrap();
-    let max_x = path.keys().map(|p| p.0).max().unwrap();
-    let min_y = path.keys().map(|p| p.1).min().unwrap();
-    let max_y = path.keys().map(|p| p.1).max().unwrap();
+    let path_len = path.len();
 
-    println!("({min_x}, {min_y}) to ({max_x}, {max_y})");
+    let compact = path.into_iter().into_group_map_by(|((_x, y), _dir)| *y);
     let mut interior_count = 0;
-    for y in min_y..=max_y {
+    for (_y, mut row) in compact {
+        row.sort_unstable_by_key(|((x, _y), _dir)| *x);
+        let mut last_x = None;
         let mut entered = None;
         let mut vert_count = 0;
-        for x in min_x..=max_x {
-            if let Some(dir) = path.get(&(x, y)) {
+        for ((x, _y), dir) in row {
+            let dx = last_x.map(|lx| x - lx).unwrap_or(0) as usize;
+            if dx > 1 {
+                if let Some(_d) = entered.take() {
+                    vert_count += 1;
+                }
+
+                let gap = dx - 1;
+                if vert_count % 2 == 1 {
+                    interior_count += gap;
+                }
+
+                entered = Some(dir);
+            } else {
                 match dir {
                     Direction::Up | Direction::Down => {
-                        print!("|");
-                        if let Some(d) = entered {
-                            if d != dir {
+                        if let Some(d) = entered.take() {
+                            if d == dir {
                                 vert_count += 1;
                             }
                         } else {
                             entered = Some(dir);
                         }
                     }
-                    Direction::Right | Direction::Left => {
-                        print!("-");
-                    }
-                }
-                interior_count += 1;
-            } else {
-                if entered.is_some() {
-                    vert_count += 1;
-                    entered = None;
-                }
-                if vert_count % 2 == 0 {
-                    print!(".");
-                } else {
-                    print!("+");
-                    interior_count += 1;
+                    Direction::Right | Direction::Left => {}
                 }
             }
+            last_x = Some(x);
         }
-        println!("");
     }
-    interior_count
+
+    interior_count + path_len
 }
 
 #[aoc(day18, part2)]
 fn part2(input: &[Instr]) -> usize {
-    todo!()
+    let expanded = input
+        .iter()
+        .map(|instr| {
+            let len = instr.color.chars().skip(2).take(5).collect::<String>();
+            let dir = instr.color.chars().skip(7).take(1).collect::<String>();
+
+            let len = usize::from_str_radix(&len, 16).expect("parse color");
+            let dir = match dir.as_str() {
+                "0" => Direction::Right,
+                "1" => Direction::Down,
+                "2" => Direction::Left,
+                "3" => Direction::Up,
+                _ => panic!("bad dir"),
+            };
+
+            Instr {
+                dir,
+                len,
+                color: String::new(),
+            }
+        })
+        .collect_vec();
+    solve(&expanded)
 }
 
 #[cfg(test)]
@@ -162,7 +184,7 @@ U 2 (#7a21e3)"
         L 2 (#015232)
         U 2 (#7a21e3)"
             )),
-            8008
+            952408144115
         );
     }
 }
