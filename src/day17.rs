@@ -1,7 +1,6 @@
-use std::collections::HashSet;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use indexmap::IndexMap;
 
 #[aoc_generator(day17)]
 fn parse(input: &str) -> Vec<Vec<usize>> {
@@ -29,6 +28,19 @@ struct State {
     y: usize,
     dir: Direction,
     dir_len: u8,
+    cost: usize,
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 type DirFn = fn(&State) -> Vec<Direction>;
@@ -44,27 +56,58 @@ impl State {
                     Direction::Right => (self.x + 1 < grid[0].len()).then(|| {
                         let x = self.x + 1;
                         let y = self.y;
-                        State { x, y, dir, dir_len }
+                        State {
+                            x,
+                            y,
+                            dir,
+                            dir_len,
+                            cost: self.cost + grid[y][x],
+                        }
                     }),
                     Direction::Left => (self.x > 0).then(|| {
                         let x = self.x - 1;
                         let y = self.y;
-                        State { x, y, dir, dir_len }
+                        State {
+                            x,
+                            y,
+                            dir,
+                            dir_len,
+                            cost: self.cost + grid[y][x],
+                        }
                     }),
                     Direction::Up => (self.y > 0).then(|| {
                         let x = self.x;
                         let y = self.y - 1;
-                        State { x, y, dir, dir_len }
+                        State {
+                            x,
+                            y,
+                            dir,
+                            dir_len,
+                            cost: self.cost + grid[y][x],
+                        }
                     }),
                     Direction::Down => (self.y + 1 < grid.len()).then(|| {
                         let x = self.x;
                         let y = self.y + 1;
-                        State { x, y, dir, dir_len }
+                        State {
+                            x,
+                            y,
+                            dir,
+                            dir_len,
+                            cost: self.cost + grid[y][x],
+                        }
                     }),
                 }
             })
             .flatten()
             .collect()
+    }
+
+    fn costless(&self) -> Self {
+        Self {
+            cost: 0,
+            ..self.clone()
+        }
     }
 }
 
@@ -85,30 +128,32 @@ fn solve(grid: &[Vec<usize>], dir_fn: DirFn) -> usize {
         y: 0,
         dir: Direction::Right, // doesn't matter
         dir_len: 0,
+        cost: 0,
     };
-    let mut stack = IndexMap::new();
-    stack.insert(start, 0);
+    let mut heap = BinaryHeap::new();
+    let mut heats = HashMap::new();
     let mut visited = HashSet::new();
-    while let Some((current, cost)) = stack.pop() {
+
+    heap.push(start);
+    while let Some(current) = heap.pop() {
         // println!("checking ({}, {}) with cost {}", current.x, current.y, cost);
         if (current.x, current.y) == goal {
-            return cost;
+            return current.cost;
         }
-        visited.insert(current);
+
+        if !visited.insert(current.costless()) {
+            continue;
+        }
+
         for n in current.next(grid, dir_fn) {
-            let c = grid[n.y][n.x];
-            if !visited.contains(&n) && !stack.contains_key(&n) {
-                // println!("  adding ({}, {}) with added cost {}", n.x, n.y, c);
-                stack.insert(n, cost + c);
-            } else if let Some(v) = stack.get_mut(&n) {
-                if *v > cost + c {
-                    // println!("  updating ({}, {}) to cum cost {}", n.x, n.y, cost + c);
-                    *v = cost + c;
+            if let Some(&existing) = heats.get(&n.costless()) {
+                if existing < n.cost {
+                    continue;
                 }
             }
+            heats.insert(n.costless(), n.cost);
+            heap.push(n);
         }
-        stack.sort_by_cached_key(|_k, v| *v);
-        stack.reverse();
     }
     panic!("didn't find one");
 }
@@ -235,4 +280,3 @@ mod tests {
         );
     }
 }
-
