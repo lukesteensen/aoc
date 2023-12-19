@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use core::fmt;
+use std::{collections::HashMap, ops::Range};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 use winnow::{
@@ -24,6 +25,44 @@ struct Part {
 impl Part {
     fn sum(&self) -> usize {
         self.x + self.m + self.a + self.s
+    }
+}
+
+#[derive(Debug, Clone)]
+struct PartRange {
+    x: Range<usize>,
+    m: Range<usize>,
+    a: Range<usize>,
+    s: Range<usize>,
+}
+
+impl PartRange {
+    fn combos(&self) -> usize {
+        self.x.len() * self.m.len() * self.a.len() * self.s.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.x.is_empty() || self.m.is_empty() || self.a.is_empty() || self.s.is_empty()
+    }
+
+    fn get_mut(&mut self, field: Field) -> &mut Range<usize> {
+        match field {
+            Field::X => &mut self.x,
+            Field::M => &mut self.m,
+            Field::A => &mut self.a,
+            Field::S => &mut self.s,
+        }
+    }
+}
+
+impl Default for PartRange {
+    fn default() -> Self {
+        Self {
+            x: 1..4001,
+            m: 1..4001,
+            a: 1..4001,
+            s: 1..4001,
+        }
     }
 }
 
@@ -68,9 +107,41 @@ impl Cond {
             Op::Gt(y) => x > y,
         }
     }
+
+    fn split(&self, part_range: PartRange) -> (PartRange, PartRange) {
+        let mut pass = part_range.clone();
+        let mut fail = part_range;
+
+        let pass_range = pass.get_mut(self.field);
+        let fail_range = fail.get_mut(self.field);
+        match &self.op {
+            Op::Lt(y) => {
+                if pass_range.end > *y {
+                    pass_range.end = *y;
+                }
+                if fail_range.start < *y {
+                    fail_range.start = *y;
+                }
+                assert!(pass_range.clone().all(|x| x < *y));
+                assert!(!fail_range.clone().any(|x| x < *y));
+            }
+            Op::Gt(y) => {
+                if pass_range.start < y + 1 {
+                    pass_range.start = y + 1;
+                }
+                if fail_range.end > *y + 1 {
+                    fail_range.end = *y + 1;
+                }
+                assert!(pass_range.clone().all(|x| x > *y));
+                assert!(!fail_range.clone().any(|x| x > *y));
+            }
+        }
+
+        (pass, fail)
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Field {
     X,
     M,
@@ -97,10 +168,25 @@ impl Cond {
     }
 }
 
+impl fmt::Display for Cond {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("{:?} {}", self.field, self.op))
+    }
+}
+
 #[derive(Debug)]
 enum Op {
     Lt(usize),
     Gt(usize),
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Op::Lt(v) => f.write_fmt(format_args!("< {}", v)),
+            Op::Gt(v) => f.write_fmt(format_args!("> {}", v)),
+        }
+    }
 }
 
 fn parse_workflow(input: &mut &str) -> PResult<Workflow> {
@@ -181,7 +267,47 @@ fn part1(input: &Input) -> usize {
 
 #[aoc(day19, part2)]
 fn part2(input: &Input) -> usize {
-    todo!()
+    fn rec<'a>(
+        workflows: &'a HashMap<String, Workflow>,
+        mut range: PartRange,
+        key: &'a str,
+    ) -> usize {
+        if range.is_empty() {
+            // println!("empty range = 0\n");
+            return 0;
+        }
+
+        if key == "A" {
+            // println!("accepted {range:?} = {}\n", range.combos());
+            return range.combos();
+        } else if key == "R" {
+            // println!("rejected = 0\n");
+            return 0;
+        }
+
+        // println!("starting range {range:?} key {key}");
+
+        let mut total = 0;
+        let w = &workflows[key];
+        for rule in &w.rules {
+            if range.is_empty() {
+                return 0;
+            }
+            if let Some(cond) = &rule.cond {
+                // println!("splitting with cond {cond}");
+                let (pass, fail) = cond.split(range);
+                total += rec(workflows, pass, &rule.dest);
+                range = fail;
+                // println!("continuing with fail range {range:?}");
+            } else {
+                total += rec(workflows, range, rule.dest.as_str());
+                break; // this will be the last anyway
+            }
+        }
+        total
+    }
+
+    rec(&input.workflows, PartRange::default(), "in")
 }
 
 #[cfg(test)]
@@ -236,7 +362,7 @@ hdj{m>838:A,pv}
 {x=2461,m=1339,a=466,s=291}
 {x=2127,m=1623,a=2188,s=1013}"
             )),
-            19114
+            167409079868000
         );
     }
 }
