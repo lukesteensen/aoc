@@ -46,7 +46,7 @@ fn part2(input: &[String]) -> usize {
         if false {
             println!("after {op:?}:");
             dump(&boxes);
-            println!("");
+            println!();
         }
     }
 
@@ -70,11 +70,11 @@ fn parse_instr<'a>(s: &mut &'a str) -> PResult<Instr<'a>> {
 }
 
 fn parse_op(s: &mut &str) -> PResult<Op> {
-    Ok(alt((
+    alt((
         ('-'.map(|_| Op::Remove)),
         ('=', digit1.parse_to()).map(|(_, f)| Op::Add(f)),
     ))
-    .parse_next(s)?)
+    .parse_next(s)
 }
 
 struct Instr<'a> {
@@ -96,7 +96,7 @@ fn dump(bs: &[IndexMap<&str, usize>]) {
         for (_j, (k, v)) in b.iter().enumerate() {
             print!(" [{k} {v}]")
         }
-        println!("");
+        println!();
     }
 }
 

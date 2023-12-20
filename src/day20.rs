@@ -32,7 +32,7 @@ impl Module {
                 .map(|d| (d, self.name.clone(), pulse))
                 .collect(),
             ModuleType::Flipflop(state) => {
-                if pulse == true {
+                if pulse {
                     Vec::new()
                 } else {
                     *state = !*state;
@@ -177,7 +177,11 @@ fn part2(input: &HashMap<String, Module>) -> usize {
         }
     }
 
-    periods.values().cloned().reduce(num::integer::lcm).expect("lcm")
+    periods
+        .values()
+        .cloned()
+        .reduce(num::integer::lcm)
+        .expect("lcm")
 }
 
 #[cfg(test)]
@@ -217,4 +221,3 @@ mod tests {
         assert_eq!(part2(&parse("<EXAMPLE>")), 8008);
     }
 }
-

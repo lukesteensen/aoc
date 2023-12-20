@@ -82,29 +82,28 @@ impl Beam {
         };
 
         dirs.into_iter()
-            .map(|dir| match dir {
-                Direction::Right => (self.x + 1 < grid[0].len()).then(|| Beam {
+            .filter_map(|dir| match dir {
+                Direction::Right => (self.x + 1 < grid[0].len()).then_some(Beam {
                     x: self.x + 1,
                     y: self.y,
                     dir,
                 }),
-                Direction::Left => (self.x > 0).then(|| Beam {
+                Direction::Left => (self.x > 0).then_some(Beam {
                     x: self.x - 1,
                     y: self.y,
                     dir,
                 }),
-                Direction::Up => (self.y > 0).then(|| Beam {
+                Direction::Up => (self.y > 0).then_some(Beam {
                     x: self.x,
                     y: self.y - 1,
                     dir,
                 }),
-                Direction::Down => (self.y + 1 < grid.len()).then(|| Beam {
+                Direction::Down => (self.y + 1 < grid.len()).then_some(Beam {
                     x: self.x,
                     y: self.y + 1,
                     dir,
                 }),
             })
-            .flatten()
             .collect()
         // println!("new coords: ({x}, {y})");
     }
@@ -182,4 +181,3 @@ mod tests {
         );
     }
 }
-

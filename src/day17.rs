@@ -50,7 +50,7 @@ impl State {
         let dirs = dir_fn(self);
 
         dirs.into_iter()
-            .map(|dir| {
+            .filter_map(|dir| {
                 let dir_len = if dir == self.dir { self.dir_len + 1 } else { 1 };
                 match dir {
                     Direction::Right => (self.x + 1 < grid[0].len()).then(|| {
@@ -99,15 +99,11 @@ impl State {
                     }),
                 }
             })
-            .flatten()
             .collect()
     }
 
     fn costless(&self) -> Self {
-        Self {
-            cost: 0,
-            ..self.clone()
-        }
+        Self { cost: 0, ..*self }
     }
 }
 
